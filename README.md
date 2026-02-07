@@ -51,7 +51,7 @@ As an engineering student with a strong background in **Applied Mathematics**, I
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/KTHIRI-Chedi/AgriSmart.git](https://github.com/KTHIRI-Chedi/AgriSmart.git)
+    git clone https://github.com/KTHIRI-Chedi/AgriSmart.git
     ```
 2.  **Install dependencies:**
     ```bash
