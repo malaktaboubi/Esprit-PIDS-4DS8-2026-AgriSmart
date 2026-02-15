@@ -1,0 +1,47 @@
+services:
+  # 1. The Database: Storing moisture history & AI decisions
+  db:
+    image: postgres:15-alpine
+    container_name: agri_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
+      POSTGRES_DB: agriculture_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Local MQTT Broker: For internal service communication
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: agri_mosquitto
+    restart: always
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+  # 3. The Backend: FastAPI + LangChain AI Agent
+  backend:
+    build: 
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: agri_backend
+    restart: always
+    depends_on:
+      - db
+      - mosquitto
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    environment:
+      - MQTT_BROKER_INTERNAL=mosquitto
+      - MQTT_BROKER_EXTERNAL=broker.emqx.io
+      - DATABASE_URL=postgresql://admin:password123@db:5432/agriculture_db
+
+volumes:
+  postgres_data:
