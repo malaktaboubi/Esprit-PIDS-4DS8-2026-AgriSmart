@@ -9,7 +9,7 @@ import traceback
 # Initialize Earth Engine
 try:
     service_account = "agrismart@agrismart-487712.iam.gserviceaccount.com"
-    key_path = r"C:\Users\SONIC\AgriSmart\satellite_pillar\agrismart-487712-8538d73bcbb6.json"
+    key_path = os.path.expanduser(r"~\AgriSmart\backend\satellite_service\Google.Earth.Engine\agrismart-487712-8538d73bcbb6.json")
     
     if not os.path.exists(key_path):
         raise FileNotFoundError(f"Service account key not found at: {key_path}")
