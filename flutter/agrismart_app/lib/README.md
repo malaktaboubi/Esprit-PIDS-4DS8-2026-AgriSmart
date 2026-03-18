@@ -46,9 +46,3 @@ Each feature module is self-contained with:
 
 The `core` module contains shared functionality used across multiple features.
 
-## Corresponding Backend Services
-
-- `crop_health` ↔ `crop_health_service`
-- `irrigation` ↔ `irrigation_service`
-- `livestock` ↔ `livestock_service`
-- `satellite` ↔ `satellite_service`

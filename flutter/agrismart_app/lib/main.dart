@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'features/crop_health/screens/home_screen.dart';
+import 'package:agrismart_app/core/theme/app_theme.dart';
+import 'package:agrismart_app/features/auth/screens/splash_screen.dart';
 
 void main() {
   runApp(const AgriSmartApp());
@@ -12,11 +13,8 @@ class AgriSmartApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AgriSmart',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
+      theme: AppTheme.darkTheme,
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
