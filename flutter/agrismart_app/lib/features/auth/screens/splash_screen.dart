@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
-import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -31,11 +31,13 @@ class _SplashScreenState extends State<SplashScreen>
 
     _progressController.forward();
 
+    // After animation, we navigate to /login.
+    // However, our GoRouter Redirect guard is watching.
+    // If the user already has a token in secure storage, GoRouter 
+    // will intercept this and instantly route them to /admin or /farmer!
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
+        context.go('/login');
       }
     });
   }

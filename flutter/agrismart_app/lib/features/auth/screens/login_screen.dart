@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +16,31 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscureText = true;
+  bool _isLoading = false;
+
+  void _handleLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final success = await authService.login(
+      _emailPhoneController.text.trim(),
+      _passwordController.text.trim(),
+    );
+
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid credentials, please try again.')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
+    // If success is true, the AuthService will notifyListeners().
+    // The AppRouter is listening to AuthService, so GoRouter will automatically
+    // trigger a redirect to /admin or /farmer based on the role! No manual push needed.
+  }
 
   @override
   void dispose() {
@@ -129,8 +157,10 @@ class _LoginScreenState extends State<LoginScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {},
-                child: const Text('Sign In'),
+                onPressed: _isLoading ? null : _handleLogin,
+                child: _isLoading 
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Sign In'),
               ),
             ),
             AppSpacing.h32,
@@ -146,7 +176,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    context.push('/signup');
+                  },
                   child: const Text(
                     'Create Account',
                     style: TextStyle(

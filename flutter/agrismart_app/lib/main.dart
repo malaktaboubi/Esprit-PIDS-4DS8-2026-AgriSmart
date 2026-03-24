@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
-import 'features/home/screens/home_screen.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const AgriSmartApp());
+import 'core/theme/app_theme.dart';
+import 'core/routing/app_router.dart';
+import 'features/auth/services/auth_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  final authService = AuthService();
+  // Attempt to read the token silently before app boots
+  await authService.checkStoredToken();
+  
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: authService),
+      ],
+      child: const AgriSmartApp(),
+    ),
+  );
 }
 
 class AgriSmartApp extends StatelessWidget {
@@ -10,17 +27,20 @@ class AgriSmartApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // Retrieve the auth service from Provider
+    final authService = Provider.of<AuthService>(context, listen: false);
+    // Initialize our GoRouter using the auth service
+    final appRouter = AppRouter(authService).router;
+
+    return MaterialApp.router(
       title: 'AgriSmart',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
+      theme: AppTheme.darkTheme,
+      routerConfig: appRouter, // Use GoRouter instead of static 'home:'
       debugShowCheckedModeBanner: false,
     );
   }
 }
+
 
 
 

@@ -61,3 +61,26 @@ As an engineering student with a strong background in **Applied Mathematics**, I
     Ensure you have the Wokwi CLI installed and the Mosquitto broker running.
 
 ---
+
+## 📱 Run Mobile App On Any Device (ngrok)
+
+Use this flow to test on physical phones or devices outside your local Wi-Fi, without hardcoding LAN IPs.
+
+1. Add your ngrok token in [infrastructure/.env](infrastructure/.env):
+    ```bash
+    NGROK_AUTHTOKEN=your_real_ngrok_token
+    ```
+2. Start the app with automatic tunnel discovery:
+    ```bash
+    cd flutter/agrismart_app
+    bash scripts/run_with_ngrok.sh
+    ```
+3. Optional: pass Flutter args through the script (device or flavor):
+    ```bash
+    bash scripts/run_with_ngrok.sh -d <device-id>
+    ```
+
+The script starts Docker services (`db`, `auth_service`, `api_gateway`, `ngrok`), fetches the live ngrok URL from the local ngrok API, and launches Flutter with:
+`--dart-define=API_BASE_URL=<ngrok-url>/api/v1/auth`.
+
+---
