@@ -3,6 +3,8 @@ services:
   db:
     image: postgres:15-alpine
     container_name: agri_db
+    networks:
+      - agri_net
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER:-admin}
@@ -12,11 +14,28 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # 1.5 API Gateway (Nginx)
+  api_gateway:
+    image: nginx:latest
+    container_name: agri_api_gateway
+    networks:
+      - agri_net
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth_service
 
   # 2. Local MQTT Broker: For internal service communication
   mosquitto:
     image: eclipse-mosquitto:latest
     container_name: agri_mosquitto
+    networks:
+      - agri_net
     restart: always
     ports:
       - "1883:1883"
@@ -24,24 +43,47 @@ services:
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
-  # 3. The Backend: FastAPI + LangChain AI Agent
-  backend:
+  # 3. Authentication Microservice
+  auth_service:
     build: 
-      context: ../backend
+      context: ../backend/auth_service
       dockerfile: Dockerfile
-    container_name: agri_backend
+    container_name: agri_auth_service
+    networks:
+      - agri_net
     restart: always
     depends_on:
       - db
-      - mosquitto
     env_file:
-      - .env
+      - ../backend/.env
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
-      - MQTT_BROKER_INTERNAL=mosquitto
-      - MQTT_BROKER_EXTERNAL=broker.emqx.io
-      - DATABASE_URL=postgresql://admin:password123@db:5432/agriculture_db
+      # Use the docker internal network to talk to db, NOT localhost!
+      - DATABASE_URL=postgresql://admin:password123@db:5432/db_auth
+
+  # 4. (Future) Irrigation Microservice
+
+  # 5. ngrok tunnel for real device testing across any network
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: agri_ngrok
+    networks:
+      - agri_net
+    restart: unless-stopped
+    depends_on:
+      - api_gateway
+    command:
+      - "http"
+      - "api_gateway:80"
+      - "--authtoken=${NGROK_AUTHTOKEN}"
+    ports:
+      - "4040:4040"
+
 
 volumes:
   postgres_data:
+
+networks:
+  agri_net:
+    driver: bridge
