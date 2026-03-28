@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:go_router/go_router.dart';
 import '../../auth/services/auth_service.dart';
 
 class ConsultantDashboardScreen extends StatefulWidget {
@@ -322,6 +323,7 @@ class _ConsultantDashboardScreenState extends State<ConsultantDashboardScreen> {
                           iconColor: const Color(0xFF27F72A),
                           title: 'AI Scanner',
                           subtitle: 'Diagnose Crops',
+                          onTap: () => GoRouter.of(context).push('/crop-health'),
                         ),
                         _quickActionCard(
                           icon: Icons.layers_rounded,
@@ -575,6 +577,7 @@ class _ConsultantDashboardScreenState extends State<ConsultantDashboardScreen> {
     required Color iconColor,
     required String title,
     required String subtitle,
+    VoidCallback? onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -587,7 +590,7 @@ class _ConsultantDashboardScreenState extends State<ConsultantDashboardScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),

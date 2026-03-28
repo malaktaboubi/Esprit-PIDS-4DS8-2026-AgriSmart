@@ -1,0 +1,8 @@
+Analyzing agrismart_app...                                      
+
+warning - The value of the field '_confidence' isn't used - lib\features\crop_health\screens\crop_health_screen.dart:28:10 - unused_field
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\crop_health\screens\crop_health_screen.dart:194:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\crop_health\screens\crop_health_screen.dart:242:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\crop_health\screens\crop_health_screen.dart:244:51 - deprecated_member_use
+
+4 issues found. (ran in 1.9s)

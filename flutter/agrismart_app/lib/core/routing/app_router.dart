@@ -5,6 +5,7 @@ import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/consultant/screens/consultant_dashboard_screen.dart';
+import '../../features/crop_health/screens/crop_health_container.dart';
 
 class AppRouter {
   final AuthService authService;
@@ -65,6 +66,10 @@ class AppRouter {
       GoRoute(
         path: '/farmer',
         builder: (context, state) => const FarmerHomeScreen(),
+      ),
+      GoRoute(
+        path: '/crop-health',
+        builder: (context, state) => const CropHealthContainer(),
       ),
     ],
   );

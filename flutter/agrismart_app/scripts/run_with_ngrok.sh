@@ -8,7 +8,7 @@ FLUTTER_DIR="$ROOT_DIR/flutter/agrismart_app"
 echo "[1/4] Starting backend + ngrok..."
 (
   cd "$INFRA_DIR"
-  docker compose up -d db auth_service api_gateway ngrok
+  docker compose up -d db auth_service crop_health_service api_gateway ngrok
 )
 
 echo "[2/4] Waiting for ngrok tunnel..."

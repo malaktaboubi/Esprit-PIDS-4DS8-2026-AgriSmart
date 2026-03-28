@@ -29,6 +29,10 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<String?> getToken() async {
+    return await _storage.read(key: 'jwt_token');
+  }
+
   Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(

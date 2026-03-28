@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
       POSTGRES_DB: agriculture_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -38,8 +38,8 @@ services:
       - agri_net
     restart: always
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      - "1884:1883"
+      - "9002:9001"
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
@@ -57,7 +57,7 @@ services:
     env_file:
       - ../backend/.env
     ports:
-      - "8001:8001"
+      - "8011:8001"
     environment:
       # Use the docker internal network to talk to db, NOT localhost!
       - DATABASE_URL=postgresql://admin:password123@db:5432/db_auth
@@ -79,6 +79,36 @@ services:
       - "--authtoken=${NGROK_AUTHTOKEN}"
     ports:
       - "4040:4040"
+
+  # 6. Database Web UI (Adminer)
+  db_ui:
+    image: adminer:latest
+    container_name: agri_db_ui
+    networks:
+      - agri_net
+    restart: always
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+
+  # 7. Crop Health Microservice
+  crop_health_service:
+    build:
+      context: ../backend/crop_health_service
+      dockerfile: Dockerfile
+    container_name: agri_crop_health_service
+    networks:
+      - agri_net
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - ../backend/.env
+    environment:
+      - DATABASE_URL=postgresql://admin:password123@db:5432/db_crop_health
+    volumes:
+      - ./crop_health_images:/app/uploads
 
 
 volumes:

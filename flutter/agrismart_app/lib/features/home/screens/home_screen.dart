@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../auth/services/auth_service.dart';
 
@@ -17,9 +18,12 @@ class FarmerHomeScreen extends StatelessWidget {
     required String title,
     required Color accent,
     bool showDot = false,
+    VoidCallback? onTap,
   }) {
     return Expanded(
-      child: AspectRatio(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AspectRatio(
         aspectRatio: 0.82,
         child: Container(
           decoration: BoxDecoration(
@@ -86,8 +90,9 @@ class FarmerHomeScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +153,9 @@ class FarmerHomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 22),
                 Expanded(
-                  child: Column(
-                    children: [
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
                       Row(
                         children: [
                           _featureCard(
@@ -176,6 +182,10 @@ class FarmerHomeScreen extends StatelessWidget {
                             icon: Icons.center_focus_strong_rounded,
                             title: 'SCAN',
                             accent: const Color(0xFF65E570),
+                            onTap: () {
+                              debugPrint('DEBUG: SCAN button clicked');
+                              GoRouter.of(context).push('/crop-health');
+                            },
                           ),
                           const SizedBox(width: 16),
                           _featureCard(
@@ -242,6 +252,7 @@ class FarmerHomeScreen extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               ],

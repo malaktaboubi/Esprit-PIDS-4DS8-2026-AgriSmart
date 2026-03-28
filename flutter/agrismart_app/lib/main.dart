@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/routing/app_router.dart';
@@ -22,20 +23,29 @@ void main() async {
   );
 }
 
-class AgriSmartApp extends StatelessWidget {
+class AgriSmartApp extends StatefulWidget {
   const AgriSmartApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Retrieve the auth service from Provider
-    final authService = Provider.of<AuthService>(context, listen: false);
-    // Initialize our GoRouter using the auth service
-    final appRouter = AppRouter(authService).router;
+  State<AgriSmartApp> createState() => _AgriSmartAppState();
+}
 
+class _AgriSmartAppState extends State<AgriSmartApp> {
+  late final GoRouter _appRouter;
+
+  @override
+  void initState() {
+    super.initState();
+    final authService = Provider.of<AuthService>(context, listen: false);
+    _appRouter = AppRouter(authService).router;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'AgriSmart',
       theme: AppTheme.darkTheme,
-      routerConfig: appRouter, // Use GoRouter instead of static 'home:'
+      routerConfig: _appRouter,
       debugShowCheckedModeBanner: false,
     );
   }

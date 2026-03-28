@@ -1,173 +1,180 @@
 import 'dart:io';
-import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
-import 'dart:convert';
-import 'dart:async';
 
 class Classifier {
   Interpreter? _interpreter;
   List<String>? _labels;
 
-  static const String modelFileName = 'assets/agrismart_model.tflite';
-  static const String labelsFileName = 'assets/class_labels.json';
-  static const int inputSize = 224;
+  static const int _inputSize = 224;
+  static const double _kConfidenceThreshold = 0.65;
+  static const double _kBrightnessThreshold = 30.0;
 
-  /// Completer to track when initialization is done.
-  /// Await [ready] before calling [predict].
-  final Completer<void> _initCompleter = Completer<void>();
-
-  /// A future that completes when the model and labels are loaded.
-  Future<void> get ready => _initCompleter.future;
-
-  /// Whether the classifier is ready to make predictions.
-  bool get isReady => _interpreter != null && _labels != null;
-
-  Classifier() {
-    _initialize();
-  }
-
-  Future<void> _initialize() async {
+  Future<void> loadModel() async {
     try {
-      await Future.wait([_loadModel(), _loadLabels()]);
-      _initCompleter.complete();
-    } catch (e) {
-      _initCompleter.completeError(e);
-      debugPrint('Error initializing classifier: $e');
-    }
-  }
-
-  Future<void> _loadModel() async {
-    try {
-      _interpreter = await Interpreter.fromAsset(modelFileName);
-      debugPrint('Model loaded successfully');
+      _interpreter ??= await Interpreter.fromAsset('assets/plant_disease_model.tflite');
+      if (_labels == null) {
+        final labelString = await rootBundle.loadString('assets/labels.txt');
+        _labels = labelString.split('\n').where((s) => s.isNotEmpty).toList();
+      }
     } catch (e) {
       debugPrint('Error loading model: $e');
-      rethrow;
     }
   }
 
-  Future<void> _loadLabels() async {
-    try {
-      final jsonString = await rootBundle.loadString(labelsFileName);
-      final Map<String, dynamic> labelsMap = json.decode(jsonString);
-      // Keys are indices '0', '1', etc.
-      _labels = List<String>.generate(
-        labelsMap.length,
-        (index) => labelsMap[index.toString()] ?? 'Unknown',
+  Future<DiagnosisResult> predict(String imagePath) async {
+    // 1. Preprocess in isolate (EXIF, Crop, Resize, Brightness)
+    final preprocessed = await compute(_processImageIsolate, imagePath);
+    if (preprocessed == null) {
+      // Replicating original "recognitions == null" case message
+      return DiagnosisResult(
+        plantName: 'Unknown Object',
+        diseaseName: 'Not a leaf or unrecognized image',
+        imagePath: imagePath,
+        isUnknown: true,
       );
-      debugPrint('Labels loaded successfully: $_labels');
-    } catch (e) {
-      debugPrint('Error loading labels: $e');
-      rethrow;
-    }
-  }
-
-  Future<Map<String, dynamic>?> predict(File imageFile) async {
-    // Wait for model and labels to be loaded before predicting
-    await ready;
-
-    if (_interpreter == null) {
-      debugPrint('Interpreter is null');
-      return null;
-    }
-    if (_labels == null) {
-      debugPrint('Labels are null');
-      return null;
     }
 
-    // 1. Preprocess the image
-    var image = img.decodeImage(imageFile.readAsBytesSync());
-    if (image == null) return null;
+    final double brightness = preprocessed['brightness'] as double;
+    final String processedPath = preprocessed['path'] as String;
 
-    // Center-crop to a square first to reduce aspect-ratio distortion.
-    // This matches the standard MobileNetV2 preprocessing pipeline and
-    // avoids stretching non-square photos (e.g. real field shots).
-    final int cropSize = math.min(image.width, image.height);
-    final int xOffset = (image.width - cropSize) ~/ 2;
-    final int yOffset = (image.height - cropSize) ~/ 2;
-    final croppedImage = img.copyCrop(
-      image,
-      x: xOffset,
-      y: yOffset,
-      width: cropSize,
-      height: cropSize,
-    );
-
-    // Resize to 224x224 using BILINEAR interpolation
-    // (matching TensorFlow's default resize used during training)
-    var resizedImage = img.copyResize(
-      croppedImage,
-      width: inputSize,
-      height: inputSize,
-      interpolation: img.Interpolation.linear,
-    );
-
-    // Convert to float32 List [1, 224, 224, 3]
-    var input = _imageToFloat32List(resizedImage);
-
-    // 2. Run inference
-    // Output shape: [1, 38] (38 classes)
-    var output = List.filled(1 * 38, 0.0).reshape([1, 38]);
-
-    _interpreter!.run(input, output);
-
-    // 3. Postprocess output
-    var result = output[0] as List<double>;
-
-    // Build a list of (index, score) and sort descending by score
-    var indexed = <MapEntry<int, double>>[];
-    for (var i = 0; i < result.length; i++) {
-      indexed.add(MapEntry(i, result[i]));
-    }
-    indexed.sort((a, b) => b.value.compareTo(a.value));
-
-    // ── Debug: print top-3 predictions ──
-    debugPrint('─── Top-3 predictions ───');
-    for (var k = 0; k < math.min(3, indexed.length); k++) {
-      final idx = indexed[k].key;
-      final score = indexed[k].value;
-      debugPrint('  #${k + 1}  ${_labels![idx]}  →  ${(score * 100).toStringAsFixed(1)}%');
-    }
-    debugPrint('─────────────────────────');
-
-    var maxScore = indexed[0].value;
-    var maxIndex = indexed[0].key;
-
-    // Reject predictions that fall below the confidence threshold.
-    // With label_smoothing=0.1 + temperature scaling (T=1.2), valid
-    // leaf images score ~50-80% while OOD images (non-leaves) score
-    // below 0.30, so this threshold separates them reliably.
-    const double confidenceThreshold = 0.30;
-    if (maxScore < confidenceThreshold) {
-      return {'label': 'Unrecognised', 'confidence': maxScore * 100};
+    if (brightness < _kBrightnessThreshold) {
+      return DiagnosisResult(
+        plantName: 'Unknown Object',
+        diseaseName: 'Image too dark – try better lighting',
+        imagePath: processedPath,
+        isUnknown: true,
+      );
     }
 
-    var label = _labels![maxIndex];
-    return {'label': label, 'confidence': maxScore * 100};
-  }
+    // 2. Ensure model and labels are ready
+    await loadModel();
+    
+    if (_labels == null || _labels!.isEmpty) {
+      return DiagnosisResult(
+        plantName: 'Error',
+        diseaseName: 'Labels file not found',
+        imagePath: processedPath,
+        isUnknown: true,
+      );
+    }
 
-  List<dynamic> _imageToFloat32List(img.Image image) {
-    var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
-    var buffer = Float32List.view(convertedBytes.buffer);
-    int pixelIndex = 0;
-
-    for (var i = 0; i < inputSize; i++) {
-      for (var j = 0; j < inputSize; j++) {
-        var pixel = image.getPixel(j, i);
-        // IMPORTANT: In dart image package v4+, pixel.r/g/b returns num.
-        // We must convert to int first to ensure [0-255] integer range,
-        // then to double for float32 input.
-        // The TFLite model has a built-in Rescaling layer that converts
-        // [0-255] -> [-1, 1] (MobileNetV2 preprocessing), so we pass
-        // raw pixel values in [0, 255] range.
-        buffer[pixelIndex++] = pixel.r.toInt().clamp(0, 255).toDouble();
-        buffer[pixelIndex++] = pixel.g.toInt().clamp(0, 255).toDouble();
-        buffer[pixelIndex++] = pixel.b.toInt().clamp(0, 255).toDouble();
+    // 3. Prepare Input Tensor
+    final bytes = File(processedPath).readAsBytesSync();
+    final image = img.decodeImage(bytes)!;
+    
+    final input = Float32List(1 * _inputSize * _inputSize * 3);
+    for (int y = 0; y < _inputSize; y++) {
+      for (int x = 0; x < _inputSize; x++) {
+        final pixel = image.getPixel(x, y);
+        final index = (y * _inputSize + x) * 3;
+        // pixel.r/g/b for image 4.x
+        input[index + 0] = (pixel.r - 127.5) / 127.5;
+        input[index + 1] = (pixel.g - 127.5) / 127.5;
+        input[index + 2] = (pixel.b - 127.5) / 127.5;
       }
     }
-    return convertedBytes.reshape([1, inputSize, inputSize, 3]);
+
+    // 4. Run Inference
+    final output = List<double>.filled(38, 0.0).reshape([1, 38]);
+    _interpreter!.run(input.buffer.asFloat32List().reshape([1, 224, 224, 3]), output);
+
+    // 5. Post-process
+    final results = (output[0] as List<double>);
+    double maxScore = -1.0;
+    int maxIndex = -1;
+    for (int i = 0; i < results.length; i++) {
+      if (results[i] > maxScore) {
+        maxScore = results[i];
+        maxIndex = i;
+      }
+    }
+
+    // Threshold check matching original logic exactly
+    if (maxIndex == -1 || maxScore < _kConfidenceThreshold) {
+      return DiagnosisResult(
+        plantName: 'Unknown Object',
+        diseaseName: 'Not a leaf or uncertain (Confidence: ${(maxScore * 100).toStringAsFixed(0)}%)',
+        imagePath: processedPath,
+        confidence: maxScore,
+        isUnknown: true,
+      );
+    }
+
+    // 6. Parse Label (EXACT Original Logic)
+    final String rawLabel = _labels![maxIndex];
+    final List<String> parts = rawLabel.split('___');
+    final String plant = parts[0]
+        .replaceAll('_', ' ')
+        .replaceAll('(', '')
+        .replaceAll(')', '')
+        .trim();
+    final String disease =
+        parts.length > 1 ? parts[1].replaceAll('_', ' ') : 'Healthy';
+
+    return DiagnosisResult(
+      plantName: plant,
+      diseaseName: disease,
+      imagePath: processedPath,
+      confidence: maxScore,
+      isUnknown: false,
+    );
+  }
+
+  void dispose() {
+    _interpreter?.close();
+  }
+}
+
+class DiagnosisResult {
+  final String plantName;
+  final String diseaseName;
+  final String imagePath;
+  final double confidence;
+  final bool isUnknown;
+
+  DiagnosisResult({
+    required this.plantName,
+    required this.diseaseName,
+    required this.imagePath,
+    this.confidence = 0.0,
+    this.isUnknown = false,
+  });
+}
+
+Map<String, dynamic>? _processImageIsolate(String path) {
+  try {
+    final bytes = File(path).readAsBytesSync();
+    img.Image? decoded = img.decodeImage(bytes);
+    if (decoded == null) return null;
+
+    decoded = img.bakeOrientation(decoded);
+
+    double total = 0;
+    int count = 0;
+    for (final pixel in decoded) {
+      total += 0.299 * pixel.r + 0.587 * pixel.g + 0.114 * pixel.b;
+      count++;
+    }
+    double brightness = count == 0 ? 255.0 : total / count;
+
+    int size = decoded.width < decoded.height ? decoded.width : decoded.height;
+    int xPos = (decoded.width - size) ~/ 2;
+    int yPos = (decoded.height - size) ~/ 2;
+    img.Image cropped = img.copyCrop(decoded, x: xPos, y: yPos, width: size, height: size);
+    
+    // Using linear interpolation for better match with standard resizing
+    img.Image resized = img.copyResize(cropped, width: 224, height: 224, interpolation: img.Interpolation.linear);
+
+    final ext = path.split('.').last;
+    final outPath = path.replaceAll('.$ext', '_cropped.$ext');
+    File(outPath).writeAsBytesSync(img.encodeJpg(resized, quality: 90));
+
+    return {'path': outPath, 'brightness': brightness};
+  } catch (e) {
+    return null;
   }
 }
