@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "agrismart-487712",
+  "private_key_id": "8538d73bcbb6a0b305f63c14d6b58e0444c00b67",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDq5gy8sr7+vfWZ\nR3KdLfgqk63P3PRswacPhWBNlBcacaH0fBb0+79iUVP99vtipMcB6hoMviqB8sCJ\ne0YCExzxsHoA8x/sxjXE3zViMgivjoMNVAjPYqsrRko7zTx+WUrvMltLaOn3gG6d\naOkAZjfrD+KjCyzyTPzAfYwgPwXcKclF1ryzgXICaIoNfmfAQS9odueRyDPNvKLD\nrguRDAerMcUQ7rsUkjElk9ok8n9l2HzOOTV57ellraVILEYPiffSVwEOwaywUGxh\nLqUceoQ+s9n/14hcn1cJY5Hp98dndZpAdVyXO7ZVYgZYGzmCtDc4DaOoNPRkiDja\nRzt5GXR9AgMBAAECggEACYVD+GT1RU1tNiZ1cIXztEQSjCV8Oak6rHAfOF27dvyq\nkAZ0hr7qYaGCuj0nsLaVg1AZ+LC/d89fOuNGceCU8H3S4BV6koXxGXbjisSU4gqw\naJqilcc9wU4Cxbw6irNzTFEZ7qtEql2n/hTJttStyQb2jF2wV2zD5Mhh5M+xHNx3\n1U95H/Upehtxrq9mmEFWX5mQpUShNIxGmNs1eFVvpwpsoJYS9dZCzg8M76v/oy2i\nFJfST6rhjV+JFdxEKst8OZZ29CK5JGGvef8Xm1JLq0dgR8B0UzRPnSgPFlGtpqbX\nnazQNcjMScfFZgU7iXGx9MQoBm1L5asg3YXku0NWoQKBgQD2C9ayTp4fWCA78YDA\nZPoFr6b7ZfSJb3KJ7y9LEBAeQdTbIxI+j39vaWyrBE/Rc3IAmtySiPQlx0ctDbni\nNx3S918WAl+mEPYw/mTcJY+vaWvj/4WuqF26lX4VBEeEcpAHT4AwLG17kwaLt9vi\nKBYPDpqkfMBcgt4c1h3F54sAYQKBgQD0ZsL331Sq/gqMTtJIDJ4Cht77V6z5ERHS\nwGtZTfxe8eWbjMpveCleEzHoDXBRKt/9r0mQLE0JTGxy8AjOk5Ijc2rwghDNSt76\n6qX4oYmEIn+WrC8+bSQ1sccOwCwoCSkbrHcHHC+J5pz/bcHzLX3CiWGSniL0jQT3\nELz8sojZnQKBgQCE695f06MO0eAQIibpSWPc4Ij4NZtHCCM7qzDEf3gFsJDalfbM\nP1+cA7tGJH0ubQzAkOjqbPxg0Gh+SXULZbVB/Ius6zlbELy/uR8p40zdeblkoe1J\nbwG7w/kqR3aPcginOmbJH6dB5CrcHka2xess1Tnr9M1C7RwrPe01tiHc4QKBgGyG\nGPsSGzmWdr6Y3X0KxTsgAnGfG/q43q4zrTdJjs/mH+uzV8ypkczpPxboqMASBsZS\nCJtRYJ/JZLqg5Xg9RP4i6RCE4MsX/O10NmCx8itPWlJggNX6hsKk/1wIb1MTxkI4\nkd4BYQad9YbiiOXfhGFWuZHuUF1BJTxEHXckG+ptAoGBAJCFWbwft4PBzKsPfiKh\nR8wXJhmIxbxkAo/8uqrQD/chfxS3hVF0w8cWdd6cnFS9/t+Gh798t49RBFJ/2Fi/\n80rr9KrABdF9lmwjht2yc5vaxTFYn4iB+xX3afjNBW+iRmqKcrP2IHs+lkkkoTJ9\nhtjCnALsT47k2Xholg20YsMq\n-----END PRIVATE KEY-----\n",
+  "client_email": "agrismart@agrismart-487712.iam.gserviceaccount.com",
+  "client_id": "100749063137994555988",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/agrismart%40agrismart-487712.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
