@@ -21,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   File? _image;
-  Map<String, dynamic>? _prediction;
+  DiagnosisResult? _prediction;
   bool _isAnalyzing = false;
 
   Future<void> _pickImage(ImageSource source) async {
@@ -50,20 +50,23 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _analyzeImage() async {
     if (_image == null) return;
 
-    final result = await _classifier.predict(_image!);
+    try {
+      final result = await _classifier.predict(_image!.path);
 
-    setState(() {
-      _prediction = result;
-      _isAnalyzing = false;
-    });
-
-    if (result == null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to analyze image. Check logs for details.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _prediction = result;
+        _isAnalyzing = false;
+      });
+    } catch (e) {
+      setState(() => _isAnalyzing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to analyze image. Check logs for details.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -153,16 +156,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildResultCard(Map<String, dynamic> prediction) {
-    final String rawLabel = prediction['label'].toString();
-    final bool isUnrecognised = rawLabel == 'Unrecognised';
+  Widget _buildResultCard(DiagnosisResult prediction) {
+    final bool isUnrecognised = prediction.isUnknown;
 
-    // Format label (remove underscores)
     final String label = isUnrecognised
         ? 'Not a recognisable plant disease'
-        : rawLabel.replaceAll('___', ' - ').replaceAll('_', ' ');
+        : '${prediction.plantName} - ${prediction.diseaseName}';
 
-    final double confidence = prediction['confidence'];
+    final double confidence = prediction.confidence * 100;
     final Color color = isUnrecognised
         ? Colors.grey
         : (confidence > 70 ? Colors.green : Colors.orange);
