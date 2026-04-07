@@ -24,20 +24,34 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final authService = Provider.of<AuthService>(context, listen: false);
-    final success = await authService.login(
+    final errorMessage = await authService.login(
       _emailPhoneController.text.trim(),
       _passwordController.text.trim(),
     );
 
-    if (!success && mounted) {
+    if (errorMessage != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid credentials, please try again.')),
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text(errorMessage)),
+            ],
+          ),
+          backgroundColor: Colors.redAccent.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 4),
+        ),
       );
       setState(() {
         _isLoading = false;
       });
     }
-    // If success is true, the AuthService will notifyListeners().
+    // If errorMessage is null, the AuthService will notifyListeners().
     // The AppRouter is listening to AuthService, so GoRouter will automatically
     // trigger a redirect to /admin or /farmer based on the role! No manual push needed.
   }
@@ -67,7 +81,8 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
               ),
               child: const Icon(
                 Icons.local_florist, // Use appropriate plant icon
@@ -158,14 +173,12 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 56,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
-                child: _isLoading 
+                child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Sign In'),
               ),
             ),
             AppSpacing.h32,
-
-            
 
             // Create Account Link
             Row(

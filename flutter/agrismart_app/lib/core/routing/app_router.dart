@@ -5,6 +5,7 @@ import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/consultant/screens/consultant_dashboard_screen.dart';
+import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../../features/crop_health/screens/crop_health_container.dart';
 
 class AppRouter {
@@ -31,14 +32,20 @@ class AppRouter {
 
       // If they ARE authenticated, we decide WHERE they should go based on the role
       if (authService.isAuthenticated) {
+        final roleHome = authService.userRole == 'admin'
+            ? '/admin'
+            : authService.userRole == 'consultant'
+                ? '/consultant'
+                : '/farmer';
+
         // If they are trying to go to login or splash, redirect to their dashboards
         if (isLoggingIn || isSignUp || isSplash) {
-          if (authService.userRole == 'consultant') {
-            return '/consultant';
-          } else {
-            // Default farmer
-            return '/farmer';
-          }
+          return roleHome;
+        }
+
+        final protectedDashboards = {'/admin', '/consultant', '/farmer'};
+        if (protectedDashboards.contains(state.matchedLocation) && state.matchedLocation != roleHome) {
+          return roleHome;
         }
       }
 
@@ -58,6 +65,10 @@ class AppRouter {
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminDashboardScreen(),
       ),
       GoRoute(
         path: '/consultant',

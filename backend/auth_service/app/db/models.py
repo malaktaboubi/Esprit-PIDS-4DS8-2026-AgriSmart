@@ -11,6 +11,6 @@ class User(Base):
     region = Column(String, nullable=True) # New Attribute
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, default="farmer", nullable=False) # "consultant", "farmer"
+    role = Column(String, default="farmer", nullable=False) # "admin", "consultant", "farmer"
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
